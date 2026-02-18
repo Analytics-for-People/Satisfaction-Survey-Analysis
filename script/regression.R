@@ -1,8 +1,6 @@
 library(MASS)
 library(tidyverse)
 
-setwd("~/Desktop/HR-Project/Survey")
-
 df <- read_csv("data/employee_survey.csv")
 
 df$Gender <- as.integer(factor(df$Gender, levels = c("Male", "Female", "Other")))

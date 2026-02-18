@@ -3,8 +3,6 @@ library(psych)
 library(polycor)
 library(lavaan)
 
-setwd("~/Desktop/HR-Project/Survey")
-
 df <- read_csv("data/employee_survey.csv")
 
 df$Gender <- as.integer(factor(df$Gender, levels = c("Male", "Female", "Other")))
@@ -44,22 +42,9 @@ efa_result <- fa(poly_s, nfactors = 3, rotate = "varimax", fm = "ml")
 fa.diagram(efa_result, main = "EFA 3-Factor Solution Diagram")
 
 model_cfa <- '
-  CareerDev =~ Age + NumCompanies + JobLevel + Experience + TrainingHoursPerYear
-  Leadership =~ TeamSize + NumReports
-  WorkSatisfaction =~ JobSatisfaction + WLB + WorkEnv + Workload + Stress
-'
-
-fit_cfa <- cfa(model_cfa, data = selected, std.lv = TRUE)
+  CareerDev =~ Experience + EduLevel
+  Leadership =~ TeamSize + NumReports + JobLevel
+  '
+fit_cfa <- cfa(model_cfa, data = selected, estimator = 'MLR', std.lv = TRUE)
 
 summary(fit_cfa, fit.measures = TRUE, standardized = TRUE)
-
-model_sem <- '
-  CareerDev =~ Age + NumCompanies + JobLevel + Experience + TrainingHoursPerYear
-  WorkSatisfaction =~ WLB + WorkEnv + Stress + Workload
-
-  WorkSatisfaction ~ CareerDev
-  JobSatisfaction ~ WorkSatisfaction + CareerDev
-'
-
-fit_sem <- sem(model_sem, data = selected)
-summary(fit_sem, fit.measures = TRUE, standardized = TRUE)
