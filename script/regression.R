@@ -1,7 +1,7 @@
 library(MASS)
 library(tidyverse)
-
-df <- read_csv("data/employee_survey.csv")
+getwd()
+df <- read_csv("/Users/hee/Desktop/Satisfaction-Survey-Analysis/data/employee_survey.csv")
 
 df$Gender <- as.integer(factor(df$Gender, levels = c("Male", "Female", "Other")))
 df$MaritalStatus <- as.integer(factor(df$MaritalStatus, levels = c("Single", "Married", "Divorced","Widowed")))
