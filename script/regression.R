@@ -1,7 +1,7 @@
 library(MASS)
 library(tidyverse)
 getwd()
-df <- read_csv("/Users/hee/Desktop/Satisfaction-Survey-Analysis/data/employee_survey.csv")
+df <- read_csv("../data/employee_survey.csv")
 
 df$Gender <- as.integer(factor(df$Gender, levels = c("Male", "Female", "Other")))
 df$MaritalStatus <- as.integer(factor(df$MaritalStatus, levels = c("Single", "Married", "Divorced","Widowed")))
@@ -26,6 +26,9 @@ selected <- df |> dplyr::select(-EmpID)
 
 summary(lm(selected$JobSatisfaction~., data = selected))
 
+
+
+
 reg.selected <- df |> dplyr::select(JobSatisfaction, WLB, WorkEnv, Workload, 
                              Stress, SleepHours, haveOT)
 summary(lm(reg.selected$JobSatisfaction~., data=reg.selected))
@@ -39,3 +42,8 @@ model <- polr(JobSatisfaction ~ WLB + Stress + Workload + WorkEnv + SleepHours +
 summary(model)
 
 exp(coef(model))
+
+
+
+
+
