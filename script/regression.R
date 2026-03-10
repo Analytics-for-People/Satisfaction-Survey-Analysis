@@ -3,7 +3,7 @@ library(tidyverse)
 library(broom)
 library(ggplot2)
 library(dplyr)
-getwd()
+
 df <- read_csv("data/employee_survey.csv") 
 
 
