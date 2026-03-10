@@ -1,49 +1,92 @@
 library(MASS)
 library(tidyverse)
+library(broom)
+library(ggplot2)
+library(dplyr)
 getwd()
-df <- read_csv("../data/employee_survey.csv")
-
-df$Gender <- as.integer(factor(df$Gender, levels = c("Male", "Female", "Other")))
-df$MaritalStatus <- as.integer(factor(df$MaritalStatus, levels = c("Single", "Married", "Divorced","Widowed")))
-df$JobLevel <- as.integer(factor(df$JobLevel, levels = c("Intern/Fresher", "Junior", "Mid", "Senior", "Lead")))
-df$Dept <- as.integer(factor(df$Dept, levels = c("IT", "Sales", "Finance", "HR", "Marketing", "Legal", "Operations","Customer Service")))
-df$EmpType <- as.integer(factor(df$EmpType, levels = c("Contract", "Part-Time", "Full-Time")))
-df$CommuteMode <- as.integer(factor(df$CommuteMode, levels = c("Walk", "Bike", "Motorbike", "Car", "Public Transport")))
-df$EduLevel <- as.integer(factor(df$EduLevel, levels = c("High School", "Bachelor", "Master", "PhD")))
-df$haveOT <- as.integer(df$haveOT)
-
-df$Age <- as.integer(cut(df$Age, breaks = c(0, 25, 35, Inf), labels = c(1, 2, 3), right = FALSE))
-df$Experience <- as.integer(cut(df$Experience, breaks = c(-1, 3, 10, Inf), labels = c(1, 2, 3)))
-df$PhysicalActivityHours <- as.integer(cut(df$PhysicalActivityHours, breaks = c(-0.1, 1, 3, Inf), labels = c(1, 2, 3)))
-df$TrainingHoursPerYear <- as.integer(cut(df$TrainingHoursPerYear, breaks = c(-0.1, 10, 30, Inf), labels = c(1, 2, 3)))
-df$SleepHours <- as.integer(cut(df$SleepHours, breaks = c(4, 6, 8, 11), labels = c(1, 2, 3), right = FALSE))
-df$CommuteDistance <- as.integer(cut(df$CommuteDistance, breaks = c(-1, 5, 15, 30, Inf), labels = c(1, 2, 3, 4)))
-df$TeamSize <- as.integer(cut(df$TeamSize, breaks = c(-1, 5, 15, Inf), labels = c(1, 2, 3)))
-df$NumReports <- as.integer(cut(df$NumReports, breaks = c(-1, 0, 5, Inf), labels = c(1, 2, 3)))
-df$NumCompanies <- as.integer(cut(df$NumCompanies, breaks = c(-1, 1, 3, 10, Inf), labels = c(1, 2, 3, 4)))
-
-selected <- df |> dplyr::select(-EmpID)
-
-summary(lm(selected$JobSatisfaction~., data = selected))
+df <- read_csv("../data/employee_survey.csv") 
 
 
+df <- df %>%
+  mutate(
+    Gender        = as.integer(factor(Gender, levels = c("Male", "Female", "Other"))),
+    MaritalStatus = as.integer(factor(MaritalStatus, levels = c("Single", "Married", "Divorced", "Widowed"))),
+    JobLevel      = as.integer(factor(JobLevel, levels = c("Intern/Fresher", "Junior", "Mid", "Senior", "Lead"))),
+    Dept          = as.integer(factor(Dept, levels = c("IT", "Sales", "Finance", "HR", "Marketing", "Legal", "Operations", "Customer Service"))),
+    EmpType       = as.integer(factor(EmpType, levels = c("Contract", "Part-Time", "Full-Time"))),
+    CommuteMode   = as.integer(factor(CommuteMode, levels = c("Walk", "Bike", "Motorbike", "Car", "Public Transport"))),
+    EduLevel      = as.integer(factor(EduLevel, levels = c("High School", "Bachelor", "Master", "PhD"))),
+    haveOT        = as.integer(haveOT),
+    
+    Age                  = as.integer(cut(Age, breaks = c(0, 25, 35, Inf), labels = 1:3, right = FALSE)),
+    Experience           = as.integer(cut(Experience, breaks = c(-1, 3, 10, Inf), labels = 1:3)),
+    PhysicalActivityHours = as.integer(cut(PhysicalActivityHours, breaks = c(-0.1, 1, 3, Inf), labels = 1:3)),
+    TrainingHoursPerYear = as.integer(cut(TrainingHoursPerYear, breaks = c(-0.1, 10, 30, Inf), labels = 1:3)),
+    SleepHours           = as.integer(cut(SleepHours, breaks = c(4, 6, 8, 11), labels = 1:3, right = FALSE)),
+    CommuteDistance      = as.integer(cut(CommuteDistance, breaks = c(-1, 5, 15, 30, Inf), labels = 1:4)),
+    TeamSize             = as.integer(cut(TeamSize, breaks = c(-1, 5, 15, Inf), labels = 1:3)),
+    NumReports           = as.integer(cut(NumReports, breaks = c(-1, 0, 5, Inf), labels = 1:3)),
+    NumCompanies         = as.integer(cut(NumCompanies, breaks = c(-1, 1, 3, 10, Inf), labels = 1:4))
+  ) %>%
+  select(-EmpID)
 
 
-reg.selected <- df |> dplyr::select(JobSatisfaction, WLB, WorkEnv, Workload, 
-                             Stress, SleepHours, haveOT)
-summary(lm(reg.selected$JobSatisfaction~., data=reg.selected))
+model1 <- lm(JobSatisfaction ~ ., data = df)
 
-hist(reg.selected$JobSatisfaction)
-
-df$JobSatisfaction <- factor(df$JobSatisfaction, ordered = TRUE)
-
-model <- polr(JobSatisfaction ~ WLB + Stress + Workload + WorkEnv + SleepHours + haveOT, data = df, Hess = TRUE)
-
-summary(model)
-
-exp(coef(model))
+summary(lm(selected$JobSatisfaction~., data = df))
 
 
+tidy_model1 <- broom::tidy(model1) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(significant = p.value < 0.05)
+
+
+ggplot(tidy_model1, aes(x = reorder(term, estimate), y = estimate, fill = significant)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values = c("TRUE" = "firebrick", "FALSE" = "grey70"), 
+                    labels = c("Non-Significant", "Significant")) +
+  labs(
+    title = "Factors Affecting Job Satisfaction",
+    subtitle = "Analysis of coefficients with statistical significance (p < 0.05)",
+    x = "Variables",
+    y = "Regression Coefficient",
+    fill = "Significance"
+  ) +
+  theme_minimal()
+
+
+
+
+
+
+reg_selected <- df %>%
+  dplyr::select(JobSatisfaction, WLB, WorkEnv, Workload, Stress, SleepHours, haveOT) %>%
+  mutate(JobSatisfaction = factor(JobSatisfaction, ordered = TRUE)) 
+
+model2 <- polr(JobSatisfaction ~ ., data = reg_selected, Hess = TRUE)
+
+summary(model2)
+exp(coef(model2)) 
+
+tidy_model2 <- broom::tidy(model2) %>%
+  filter(!stringr::str_detect(term, "\\|")) %>% 
+  mutate(effect = ifelse(estimate > 0, "Positive", "Negative"))
+
+
+ggplot(tidy_model2, aes(x = reorder(term, estimate), y = estimate, fill = effect)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  coord_flip() +
+  scale_fill_manual(values = c("Positive" = "darkgreen", "Negative" = "firebrick")) +
+  labs(
+    title = "Impact of Key Factors on Job Satisfaction Level",
+    subtitle = "Ordered Logistic Regression (Log-odds scale)",
+    x = "Factors",
+    y = "Estimate",
+    fill = "Direction of Effect"
+  ) +
+  theme_minimal()
 
 
 
