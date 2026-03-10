@@ -4,7 +4,7 @@ library(broom)
 library(ggplot2)
 library(dplyr)
 getwd()
-df <- read_csv("../data/employee_survey.csv") 
+df <- read_csv("data/employee_survey.csv") 
 
 
 df <- df %>%
@@ -33,8 +33,7 @@ df <- df %>%
 
 model1 <- lm(JobSatisfaction ~ ., data = df)
 
-summary(lm(selected$JobSatisfaction~., data = df))
-
+summary(model1)
 
 tidy_model1 <- broom::tidy(model1) %>%
   filter(term != "(Intercept)") %>%
